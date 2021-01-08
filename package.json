@@ -14,5 +14,8 @@
     "prompt-sync": "^4.2.0",
     "recurse": "^3.0.2",
     "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "pkg": "^4.4.9"
   }
 }
