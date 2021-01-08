@@ -1,36 +1,52 @@
-require('console-stamp')(console);
-
 const NodeId3 = require('node-id3');
 const recruse = require('recurse');
 const Fs = require('fs');
 const Path = require('path');
+const { v4: uuid } = require('uuid');
+const prompt = require('prompt-sync')();
 
+let startAnswer = null;
+while (startAnswer !== 'ja') {
+	console.info(`De volgende map zal worden gescand op audio-bestanden: ${process.cwd()}`);
+
+	startAnswer = prompt('Wil je verder gaan? (ja/nee) ');
+	if (startAnswer === 'nee') {
+		process.exit(0);
+	} else if (startAnswer !== 'ja') {
+		console.warn('Ongeldig antwoord. Type "ja" om verder te gaan, of "nee" om het programma af te sluiten.');
+	}
+
+	console.log('');
+}
+
+require('console-stamp')(console);
 const output = [];
 
 const filter = (path, stat) => {
 	if (stat.isDirectory()) {
+		console.log(`> ${path}`);
 		return false;
 	}
 	
 	return path.match(/\.(mp3|flac|wav|ogg|m4a)$/i);
 }
 
-console.info('Scanning directory...');
+console.info('Map scannen...');
 
 recruse('.', {writefilter: filter}).on('data', file => {
 	const tags = NodeId3.read(file);
 	output.push({
-		dir: Path.dirname(file),
+		key: uuid(),
 		file: Path.basename(file),
 		album: tags?.['album'],
 		artist: tags?.['artist'],
 		title: tags?.['title']
 	});
 }).on('end', () => {
-	console.info('Serialising...');
+	console.info('Data converteren naar JSON-formaat...');
 	const stringified = JSON.stringify(output); 
 
-	console.info('Writing output file: output.json');
+	console.info('Data wordt weggeschreven naar: output.json');
 	Fs.writeFileSync('output.json', stringified);
 
 	console.info('HTML-pagina samenstellen...');
@@ -39,7 +55,6 @@ recruse('.', {writefilter: filter}).on('data', file => {
 <td>${x.artist ?? ''}</td>
 <td>${x.title ?? ''}</td>
 <td>${x.album ?? ''}</td>
-<td>${x.dir ?? ''}</td>
 <td>${x.file ?? ''}</td>
 </tr>
 `);
@@ -52,7 +67,6 @@ recruse('.', {writefilter: filter}).on('data', file => {
 <th>Artiest</th>
 <th>Titel</th>
 <th>Album</th>
-<th>Map</th>
 <th>Bestandsnaam</th>
 </tr>
 </thead>
@@ -62,8 +76,10 @@ ${htmlEntries.join('\n')}
 </table>
 </body>
 </html>`;
-	console.info('HTML-pafina schrijven naar bestand: output.html');
+	console.info('HTML-pagina wordt weggeschreven naar: output.html');
 	Fs.writeFileSync('output.html', html);
 	
-	console.info('Done!');
+	console.info('Klaar!');
+	console.info('Druk op enter om het programma te beëindigen.');
+	prompt();
 });

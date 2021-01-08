@@ -11,6 +11,7 @@
   "dependencies": {
     "console-stamp": "^0.2.9",
     "node-id3": "^0.2.1",
+    "prompt-sync": "^4.2.0",
     "recurse": "^3.0.2",
     "uuid": "^8.3.2"
   }
