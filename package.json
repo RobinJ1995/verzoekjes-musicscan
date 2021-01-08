@@ -1,0 +1,17 @@
+{
+  "name": "musicscan",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Robin Jacobs",
+  "dependencies": {
+    "console-stamp": "^0.2.9",
+    "node-id3": "^0.2.1",
+    "recurse": "^3.0.2",
+    "uuid": "^8.3.2"
+  }
+}

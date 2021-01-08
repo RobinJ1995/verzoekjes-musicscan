@@ -1,0 +1,11 @@
+node_modules
+.idea
+output.*
+*.mp3
+*.ogg
+*.m4a
+*.flac
+*.wav
+main-linux
+main-macos
+main-win.exe
