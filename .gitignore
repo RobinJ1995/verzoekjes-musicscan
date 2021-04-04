@@ -6,6 +6,6 @@ output.*
 *.m4a
 *.flac
 *.wav
-main-linux
-main-macos
-main-win.exe
+musicscan-linux
+musicscan-macos
+musicscan-win.exe
