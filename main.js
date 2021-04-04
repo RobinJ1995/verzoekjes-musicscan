@@ -31,43 +31,53 @@ const filter = (path, stat) => {
 }
 
 const parseTags = file => MusicMetadata.parseFile(file).then(x => x?.common);
-const promises = [];
+const parseTasks = [];
 
 console.info('⏳ Map scannen...');
 
 recruse('.', {writefilter: filter}).on('data', file => {
 	console.log(`📄 ${file}`);
-	promises.push(parseTags(file)
-		.then(tags => {
-			console.log(`🎵 ${tags?.['artist']} - ${tags?.['title']}`);
-			output.push({
-				key: uuid(),
-				file: Path.basename(file),
-				album: tags?.['album'],
-				artist: tags?.['artist'],
-				title: tags?.['title']
-			});
-		}).catch(err => {
-			console.error(`🛑 Kan bestand niet verwerken: ${file}`);
-			console.error(err);
-			output.push({
-				key: uuid(),
-				file: Path.basename(file)
-			});
-		}));
-}).on('end', () => {
+	
+	parseTasks.push(() => new Promise((resolve, reject) => {
+		parseTags(file)
+			.then(tags => {
+				console.log(`🎵 ${tags?.['artist']} - ${tags?.['title']}`);
+				
+				output.push({
+					key: uuid(),
+					file: Path.basename(file),
+					album: tags?.['album'],
+					artist: tags?.['artist'],
+					title: tags?.['title']
+				});
+			})
+			.catch(err => {
+				console.error(`🛑 Kan bestand niet verwerken: ${file}`);
+				console.error(err);
+				output.push({
+					key: uuid(),
+					file: Path.basename(file)
+				});
+			})
+			.then(resolve);
+	}));
+}).on('end', async () => {
 	console.info('ℹ️ Klaar met scannen.');
-	console.info('⏳ Wachten tot alle bestanden verwerkt zijn...')
-	Promise.all(promises)
-		.then(() => {
-			console.info('⏳ Data converteren naar JSON-formaat...');
-			const stringified = JSON.stringify(output);
-
-			console.info('⏳ Data wordt weggeschreven naar: output.json');
-			Fs.writeFileSync('output.json', stringified);
-
-			console.info('⏳ HTML-pagina samenstellen...');
-			const htmlEntries = output.map(x => `
+	
+	console.info('⏳ Gevonden bestanden verwerken...');
+	for (const parseTask of parseTasks) {
+		await parseTask();
+	}
+	console.info('ℹ️ Klaar met verwerken.');
+	
+	console.info('⏳ Data converteren naar JSON-formaat...');
+	const stringified = JSON.stringify(output, undefined, 4);
+	
+	console.info('⏳ Data wordt weggeschreven naar: output.json');
+	Fs.writeFileSync('output.json', stringified);
+	
+	console.info('⏳ HTML-pagina samenstellen...');
+	const htmlEntries = output.map(x => `
 <tr>
 <td>${x.artist ?? ''}</td>
 <td>${x.title ?? ''}</td>
@@ -75,7 +85,7 @@ recruse('.', {writefilter: filter}).on('data', file => {
 <td>${x.file ?? ''}</td>
 </tr>
 `);
-			const html = `<!DOCTYPE html>
+	const html = `<!DOCTYPE html>
 <html>
 <body>
 <table border="1">
@@ -93,11 +103,10 @@ ${htmlEntries.join('\n')}
 </table>
 </body>
 </html>`;
-			console.info('⏳ HTML-pagina wordt weggeschreven naar: output.html');
-			Fs.writeFileSync('output.html', html);
-
-			console.info('✅ Klaar!');
-			console.info('ℹ️ Druk op enter om het programma te beëindigen.');
-			prompt();
-		})
+	console.info('⏳ HTML-pagina wordt weggeschreven naar: output.html');
+	Fs.writeFileSync('output.html', html);
+	
+	console.info('✅ Klaar!');
+	console.info('ℹ️ Druk op enter om het programma te beëindigen.');
+	prompt();
 });
